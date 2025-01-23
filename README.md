@@ -13,9 +13,9 @@ Yixuan Liu, Rodrigo Dorantes-Gilardi, Larry Han, and Albert-László Barabási.
 
 - This repository contains the following datasets collected from:
 
-https://www.dimensions.ai/
+[**Dimensions.ai**](http://Dimensions.ai) (https://www.dimensions.ai/)
 
-https://artfacts.net/
+[**Artfacts.net](http://Artfacts.net)** (https://artfacts.net/)
 
 - And with codes and snippets are conducted through:
 
