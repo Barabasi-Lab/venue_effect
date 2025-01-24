@@ -45,9 +45,9 @@ Variables collected include:
 - `old_paper_cum_citations`
 - `cum_funding_count`
 - `career_stage`
-- `first_year`: first year when researcher publish such venue
+- `first_year`: first year of all publications
 - `year`: current calendar year
-- `first_publish_year`: first year of all publications
+- `first_publish_year`: first year when researcher publish such venue
 - `to_year`: year to exposure
 - `gender`: 1 for female, 0 for male
 - `affiliation_country_codes`
@@ -80,23 +80,23 @@ Variables collected include:
 
 This includes demo codes to replicate the main results, we used `Stata/MP 18.0`, and the functions from `xthdidregress`(Documentation: https://www.stata.com/manuals/causalxthdidregress.pdf) Since `xthdidregress` involves estimation of combinations of group and time, we recommend users to set the maximum number of attributes larger as a start by using: `set maxvar 120000`.
 
-To replicate the results, one needs to go through stata do_files under , and retrieve estimates of effect by using (with `nature_exposure_cit.do` as example):
+To replicate the results, one needs to go through stata do_files under `code/art/effect_estimation` and `code/science/effect_estimation`, and retrieve estimates of effect by using (with `nature_exposure.do` as example):
 
 ```r
-do nature_exposure_cit.do
+do nature_exposure.do
 ```
 
-Which will provide the estimated result in `nature_exposure_cit_atet.csv`.
+Which will provide the estimated result in `nature_exposure_cit_atet.csv`, `nature_exposure_prod_atet.csv`, `nature_exposure_grant_atet.csv`.
 
-- Venue effect upon exposure
-    - Science:
-    - Art:
-- Variation of effect
-    - Science:
-    - Art:
-- Heterogeneity of effect: gender, career stage, geographic representation:
-    - Science:
-    - Art:
+- Venue effect upon **exposure**:
+    - Science: including `nature_exposure.do`, `science_exposure.do`, `pnas_exposure.do`, results under `results\science`: `nature_exposure_cit_atet.csv`, `science_exposure_cit_atet.csv`, `pnas_exposure_cit_atet.csv` etc.
+    - Art: including `venice_exposure.do`, results under `results\art`: `venice_exposure_solo_atet.csv`, `venice_exposure_group_atet.csv`, `venice_exposure_fair_atet.csv`, etc.
+- **Variation** of effect:
+    - Science: including `nature_variation_cit.do`, `nature_variation_prod.do`, etc.
+    - Art: including `venice_variation_solo.do`, `venice_variation_group.do`, etc.
+- **Heterogeneity** of effect: (including gender, career stage, geographic representation)
+    - Science: including `nature_exposure_gender.do`, `nature_exposure_career.do`, etc.
+    - Art: including `venice_exposure_gender.do`, `venice_exposure_career.do`, etc.
 
 ### Data extraction
 
@@ -104,34 +104,18 @@ We used Google BigQuery to extract the subsets for Dimensions.ai. With detailed 
 
 ### Matching algorithms
 
-In this part we use data after preprocessing, to find the venue-participated individuals with control pairs, through a hybrid matching scheme by coarsened exact matching and dynamic matching based on distance.
+In this part we use data after preprocessing, to find the venue-participated individuals with control pairs, through a hybrid matching scheme by coarsened exact matching and dynamic matching based on distance and nearest neiughbours.
 
-We used Python 3.11.8, and modules below need to be included:
+We used `Python 3.11.8`, and modules below need to be included:
 
 ```python
-
+pandas
+numpy
+glob
+scipy.spatial.distance
+fastdtw
 ```
 
-Scientists, please refer to the codes under:
+Scientists: `code/science/matching`
 
-Artists, please refer to the codes under:
-
-```r
-import delimited "C:\Users\missn\CCNR Dropbox\Success Team\Liu, Yixuan\Venues\journals_top3\nature_citation_bypart1.csv", clear 
-gen year_to_publish = to_year + 5
-encode career_stage, generate(career_cat)
-xtset researcher_id year_to_publish
-
-* Run xthdidregress command
-xthdidregress ra (cum_citations_na cum_publication_count cum_funding_count cum_corresponding_count i.career_cat) (is_journal), group(researcher_id)
-
-* Save ATET results using parmest
-parmest, saving(aggregated_atet, replace)
-use aggregated_atet.dta, clear
-gen cohort_number = real(regexs(1)) if regexm(parm, "([0-9]+)\.year_to_publish")
-gen to_year = cohort_number - 5
-drop parm cohort_number eq
-
-* Save the modified dataset as a CSV file
-export delimited "C:\Users\missn\CCNR Dropbox\Success Team\Liu, Yixuan\Venues\aggregated_atet_results.csv", replace
-```
+Artists: `code/art/matching`
