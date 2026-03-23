@@ -3,7 +3,7 @@
 > The provided code and data are designed to investigate the impact of prestigious venues in science and the arts. We aim to deepen understanding of how venues influence individual career trajectories and their role in shaping opportunities and outcomes.
 > 
 
-![image.png](image.png)
+![0-diagram.png](0-diagram.png)
 
 ## Authors
 
