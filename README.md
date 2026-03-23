@@ -219,7 +219,6 @@ Science venues include top journals such as Nature, Science, and PNAS across fie
 ## References
 
 - Callaway, B. & Sant'Anna, P.H. (2021). Difference-in-differences with multiple time periods. *Journal of Econometrics*, 225(2), 200–230.
-- Tian, C., Huang, Y., Jin, C., Ma, Y. & Uzzi, B. (2025). The distinctive innovation patterns and network embeddedness of scientific prizewinners. *PNAS*, 122(40).
 - Huang, J., Gates, A.J., Sinatra, R. & Barabási, A.-L. (2020). Historical comparison of gender inequality in scientific careers across countries and disciplines. *PNAS*, 117(9), 4609–4616.
 - Rambachan, A. & Roth, J. (2023). A more credible approach to parallel trends. *Review of Economic Studies*, 90(5), 2555–2591.
 
