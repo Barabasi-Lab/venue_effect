@@ -1,4 +1,4 @@
-# The Venue Effect in Science and Art
+# The Venue Advantages in Science and Art
 
 > The provided code and data are designed to investigate the impact of prestigious venues in science and the arts. We aim to deepen understanding of how venues influence individual career trajectories and their role in shaping opportunities and outcomes.
 
@@ -10,7 +10,7 @@ Yixuan Liu, Rodrigo Dorantes-Gilardi, Larry Han, and Albert-László Barabási.
 
 ## Description
 
-This repository contains the analysis pipeline for studying the venue effect across two domains — scientific publishing and visual art exhibitions. It includes code for data preprocessing, matching, causal estimation, and visualization.
+This repository contains the analysis pipeline for studying the venue advantages across two domains — scientific publishing and visual art exhibitions. It includes code for data preprocessing, matching, causal estimation, and visualization.
 
 **Data sources:**
 - [Dimensions.ai](http://Dimensions.ai) — scientific research database
