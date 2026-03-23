@@ -76,7 +76,7 @@ venue_effect/
 
 The analysis follows four stages, applied in parallel for both science and art:
 
-**1. Preprocessing** → **2. Matching** → **3. DiD Estimation** → **4. Visualization**
+**1. Preprocessing** → **2. Matching** → **3. DiD Estimation** → **4. Visualization & Analysis**
 
 ### Stage 1: Preprocessing
 
