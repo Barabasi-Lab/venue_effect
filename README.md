@@ -1,4 +1,4 @@
-# The Venue Effect in Science and Art
+# The Venue Advantages in Science and Art
 
 > The provided code and data are designed to investigate the impact of prestigious venues in science and the arts. We aim to deepen understanding of how venues influence individual career trajectories and their role in shaping opportunities and outcomes.
 
@@ -10,7 +10,7 @@ Yixuan Liu, Rodrigo Dorantes-Gilardi, Larry Han, and Albert-László Barabási.
 
 ## Description
 
-This repository contains the analysis pipeline for studying the venue effect across two domains — scientific publishing and visual art exhibitions. It includes code for data preprocessing, matching, causal estimation, and visualization.
+This repository contains the analysis pipeline for studying the venue advantages across two domains — scientific publishing and visual art exhibitions. It includes code for data preprocessing, matching, causal estimation, and visualization.
 
 **Data sources:**
 - [Dimensions.ai](http://Dimensions.ai) — scientific research database
@@ -219,7 +219,6 @@ Science venues include top journals such as Nature, Science, and PNAS across fie
 ## References
 
 - Callaway, B. & Sant'Anna, P.H. (2021). Difference-in-differences with multiple time periods. *Journal of Econometrics*, 225(2), 200–230.
-- Tian, C., Huang, Y., Jin, C., Ma, Y. & Uzzi, B. (2025). The distinctive innovation patterns and network embeddedness of scientific prizewinners. *PNAS*, 122(40).
 - Huang, J., Gates, A.J., Sinatra, R. & Barabási, A.-L. (2020). Historical comparison of gender inequality in scientific careers across countries and disciplines. *PNAS*, 117(9), 4609–4616.
 - Rambachan, A. & Roth, J. (2023). A more credible approach to parallel trends. *Review of Economic Studies*, 90(5), 2555–2591.
 
