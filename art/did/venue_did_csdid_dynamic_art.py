@@ -14,6 +14,10 @@ This directly estimates:
   2. Cohort effects by actual biennale edition year (aggte("group"))
   3. Heterogeneity by subgroup (gender, career_stage, region)
 
+Supports two control group modes via --control_group flag:
+  - "nevertreated" (default): only never-treated controls (first_treat=0)
+  - "notyettreated": later-cohort treated artists also serve as controls
+
 Supports enriched_titles data with s_titles / S_titles outcomes.
 
 Usage:
@@ -25,6 +29,13 @@ Usage:
         --input_dir ../../data/matches/enriched_titles \\
         --outcomes S G s_titles S_titles \\
         --heterogeneity gender career_stage region
+
+    # Not-yet-treated
+    python venue_did_csdid_dynamic_art.py \\
+        --input ../../data/matches/enriched_titles/matched_venice_biennale_enriched_titles.csv \\
+        --outcomes S G F \\
+        --control_group notyettreated \\
+        --output_dir ../../data/did_art_notyettreated
 """
 
 import argparse
@@ -273,9 +284,16 @@ def build_xformla(outcome, covariates, available_cols):
     return f"{outcome}~" + "+".join(covs) if covs else f"{outcome}~1"
 
 
-def run_csdid(df, outcome, est_method='reg', covariates=None, n_boot=999, label=''):
+def run_csdid(df, outcome, est_method='reg', covariates=None, n_boot=999, label='',
+              control_group='nevertreated'):
+    """
+    Run csdid ATTgt estimation.
+
+    control_group: "nevertreated" or "notyettreated"
+    """
     prefix = f'[{label}] ' if label else ''
     print(f'\n  {prefix}Estimating ATT(g,t) for: {outcome}')
+    print(f'    Method: {est_method}, Bootstrap: {n_boot}, Control group: {control_group}')
 
     if outcome not in df.columns:
         print(f'    WARNING: "{outcome}" not in data. Skipping.')
@@ -308,13 +326,13 @@ def run_csdid(df, outcome, est_method='reg', covariates=None, n_boot=999, label=
             return ATTgt(
                 yname=outcome, gname="first_treat", idname="artist_int_id",
                 tname="panel_time", xformla=formula, data=work,
-                control_group='nevertreated', panel=False, est_method=est_method,
+                control_group=control_group, panel=False, est_method=est_method,
             ).fit()
         except TypeError:
             att = ATTgt(
                 yname=outcome, gname="first_treat", idname="artist_int_id",
                 tname="panel_time", xformla=formula, data=work,
-                control_group='nevertreated', panel=False,
+                control_group=control_group, panel=False,
             )
             try:
                 return att.fit(est_method=est_method)
@@ -761,7 +779,7 @@ def subset_by(df, col, val):
     return df[df['artist_id'].isin(keep)].copy()
 
 
-def run_heterogeneity(df, outcome, col, values, **kwargs):
+def run_heterogeneity(df, outcome, col, values, control_group='nevertreated', **kwargs):
     results = {}
     for val in values:
         sub = subset_by(df, col, val)
@@ -771,13 +789,14 @@ def run_heterogeneity(df, outcome, col, values, **kwargs):
         if nt == 0 or nc == 0:
             print('    SKIP')
             continue
-        res = run_csdid(sub, outcome, label=f'{col}={val}', **kwargs)
+        res = run_csdid(sub, outcome, label=f'{col}={val}',
+                        control_group=control_group, **kwargs)
         if res is not None:
             results[val] = res
     return results
 
 
-def run_geo(df, outcome, **kwargs):
+def run_geo(df, outcome, control_group='nevertreated', **kwargs):
     results = {}
     for g in GEO_GROUPS:
         sub = subset_by(df, 'geo_group', g)
@@ -787,7 +806,8 @@ def run_geo(df, outcome, **kwargs):
         if nt == 0 or nc == 0:
             print('    SKIP')
             continue
-        res = run_csdid(sub, outcome, label=f'geo={g}', **kwargs)
+        res = run_csdid(sub, outcome, label=f'geo={g}',
+                        control_group=control_group, **kwargs)
         if res is not None:
             results[g] = res
     return results
@@ -823,12 +843,13 @@ def save_one_result(key, data, output_dir, file_label):
 # =============================================================================
 
 def process_one_file(input_path, output_dir, outcomes, het_types,
-                     est_method='reg', covariates=None, n_boot=999):
+                     est_method='reg', covariates=None, n_boot=999,
+                     control_group='nevertreated'):
     input_path = Path(input_path)
     file_label = input_path.stem
 
     print(f'\n{"="*70}')
-    print(f'  ART VENUE DiD (DYNAMIC/CALENDAR-YEAR): {file_label}')
+    print(f'  ART VENUE DiD (DYNAMIC/CALENDAR-YEAR/{control_group.upper()}): {file_label}')
     print(f'{"="*70}')
 
     df, meta = load_and_prepare(input_path)
@@ -843,7 +864,8 @@ def process_one_file(input_path, output_dir, outcomes, het_types,
         print(f'\n{"─"*50}\n  OUTCOME: {outcome}\n{"─"*50}')
 
         result = run_csdid(df, outcome, est_method=est_method,
-                           covariates=covariates, n_boot=n_boot, label='general')
+                           covariates=covariates, n_boot=n_boot, label='general',
+                           control_group=control_group)
         if result is None:
             continue
 
@@ -883,18 +905,21 @@ def process_one_file(input_path, output_dir, outcomes, het_types,
             if ht == 'gender':
                 print(f'\n  ── Gender het: {outcome} ──')
                 hr = run_heterogeneity(df, outcome, 'gender_exact', ['female','male'],
-                                       est_method=est_method, covariates=hcovs, n_boot=n_boot)
+                                       est_method=est_method, covariates=hcovs, n_boot=n_boot,
+                                       control_group=control_group)
                 hp = 'gender'
             elif ht == 'career_stage':
                 print(f'\n  ── Career het: {outcome} ──')
                 hr = run_heterogeneity(df, outcome, 'career_stage',
                                        ['early-career','mid-career','late-career'],
-                                       est_method=est_method, covariates=hcovs, n_boot=n_boot)
+                                       est_method=est_method, covariates=hcovs, n_boot=n_boot,
+                                       control_group=control_group)
                 hp = 'career'
             elif ht == 'region':
                 print(f'\n  ── Region het: {outcome} ──')
                 hr = run_geo(df, outcome, est_method=est_method,
-                             covariates=hcovs, n_boot=n_boot)
+                             covariates=hcovs, n_boot=n_boot,
+                             control_group=control_group)
                 hp = 'region'
             else:
                 continue
@@ -941,6 +966,9 @@ def main():
     ap.add_argument('--covariates', nargs='*', default=None)
     ap.add_argument('--glob', type=str, default='matched_*',
                     help='Glob pattern for input files (default: matched_*)')
+    ap.add_argument('--control_group', default='nevertreated',
+                    choices=['nevertreated', 'notyettreated'],
+                    help='Control group type: nevertreated (default) or notyettreated')
     args = ap.parse_args()
 
     if not args.input and not args.input_dir:
@@ -955,7 +983,8 @@ def main():
 
     if args.input:
         process_one_file(args.input, out, args.outcomes, args.heterogeneity,
-                         est_method=args.est_method, covariates=cov, n_boot=args.n_boot)
+                         est_method=args.est_method, covariates=cov, n_boot=args.n_boot,
+                         control_group=args.control_group)
     else:
         input_dir = Path(args.input_dir)
         pattern = args.glob
@@ -973,7 +1002,8 @@ def main():
         print(f'\nFound {len(files)} files in {input_dir} (pattern: {pattern})')
         for f in files:
             process_one_file(f, out, args.outcomes, args.heterogeneity,
-                             est_method=args.est_method, covariates=cov, n_boot=args.n_boot)
+                             est_method=args.est_method, covariates=cov, n_boot=args.n_boot,
+                             control_group=args.control_group)
 
 
 if __name__ == '__main__':

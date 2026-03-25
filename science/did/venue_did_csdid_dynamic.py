@@ -19,6 +19,10 @@ timing, which is what you want when estimating both:
   - dynamic effects
   - effect by cohort
 
+Supports two control group modes via --control_group flag:
+  - "nevertreated" (default): only never-treated controls (first_treat=0)
+  - "notyettreated": later-cohort treated authors also serve as controls
+
 Outputs are saved as CSV with columns such as:
   - att, se, ci_lower, ci_upper, pvalue
   - dynamic: event_time, to_year
@@ -36,11 +40,18 @@ Data expectations:
   - Controls: never treated, first_treat = 0
 
 Usage:
-    # Single file
+    # Single file (never-treated, default)
     python venue_did_csdid_dynamic.py \
         --input ../../data/matches/enriched_citations/merged_physics_Nature_enriched.csv \
         --outcomes cum_citations_na cum_publication_count cum_funding_count \
         --heterogeneity gender career_stage region
+
+    # Not-yet-treated control group
+    python venue_did_csdid_dynamic.py \
+        --input ../../data/matches/enriched_l2/merged_physics_Nature_enriched_l2.csv \
+        --outcomes cum_citations_na cum_publication_count cum_funding_count \
+        --control_group notyettreated \
+        --output_dir ../../data/did_notyettreated
 
     # Directory of files
     python venue_did_csdid_dynamic.py \
@@ -514,15 +525,20 @@ def build_xformla(outcome, covariates, available_cols):
     return f"{outcome}~" + "+".join(covs)
 
 
-def run_csdid(df, outcome, est_method="reg", covariates=None, n_boot=999, label=""):
+def run_csdid(df, outcome, est_method="reg", covariates=None, n_boot=999, label="",
+              control_group="nevertreated"):
     """
     Run csdid ATTgt estimation using:
       - tname = panel_time = calendar year
       - gname = first_treat = actual venue_year for treated, 0 for controls
+
+    control_group: "nevertreated" or "notyettreated"
+      - nevertreated: only first_treat=0 authors serve as controls
+      - notyettreated: later-cohort treated authors also serve as controls
     """
     prefix = f"[{label}] " if label else ""
     print(f"\n  {prefix}Estimating ATT(g,t) for: {outcome}")
-    print(f"    Method: {est_method}, Bootstrap: {n_boot}")
+    print(f"    Method: {est_method}, Bootstrap: {n_boot}, Control group: {control_group}")
 
     if outcome not in df.columns:
         print(f'    WARNING: outcome "{outcome}" not in data. Skipping.')
@@ -567,7 +583,7 @@ def run_csdid(df, outcome, est_method="reg", covariates=None, n_boot=999, label=
                 tname="panel_time",
                 xformla=formula,
                 data=work,
-                control_group="nevertreated",
+                control_group=control_group,
                 panel=False,
                 est_method=est_method,
                 bstrap=True,
@@ -583,7 +599,7 @@ def run_csdid(df, outcome, est_method="reg", covariates=None, n_boot=999, label=
                     tname="panel_time",
                     xformla=formula,
                     data=work,
-                    control_group="nevertreated",
+                    control_group=control_group,
                     panel=False,
                     est_method=est_method,
                 )
@@ -596,7 +612,7 @@ def run_csdid(df, outcome, est_method="reg", covariates=None, n_boot=999, label=
                     tname="panel_time",
                     xformla=formula,
                     data=work,
-                    control_group="nevertreated",
+                    control_group=control_group,
                     panel=False,
                 )
                 try:
@@ -1191,6 +1207,7 @@ def run_heterogeneity(
     est_method="reg",
     covariates=None,
     n_boot=999,
+    control_group="nevertreated",
 ):
     """
     Run csdid separately for each subgroup value.
@@ -1217,6 +1234,7 @@ def run_heterogeneity(
             covariates=covariates,
             n_boot=n_boot,
             label=f"{subgroup_col}={val}",
+            control_group=control_group,
         )
         if res is not None:
             results[val] = res
@@ -1224,7 +1242,8 @@ def run_heterogeneity(
     return results
 
 
-def run_geo_heterogeneity(df, outcome, est_method="reg", covariates=None, n_boot=999):
+def run_geo_heterogeneity(df, outcome, est_method="reg", covariates=None, n_boot=999,
+                          control_group="nevertreated"):
     """
     Run csdid for each geography group using geo_group.
     """
@@ -1247,6 +1266,7 @@ def run_geo_heterogeneity(df, outcome, est_method="reg", covariates=None, n_boot
             covariates=covariates,
             n_boot=n_boot,
             label=f"geo={geo_label}",
+            control_group=control_group,
         )
         if res is not None:
             results[geo_label] = res
@@ -1292,6 +1312,7 @@ def process_one_file(
     est_method="reg",
     covariates=None,
     n_boot=999,
+    control_group="nevertreated",
 ):
     """
     Full pipeline for one enriched matched panel file.
@@ -1300,7 +1321,7 @@ def process_one_file(
     file_label = input_path.stem.replace("_enriched", "")
 
     print(f'\n{"=" * 70}')
-    print(f"  VENUE DiD ESTIMATION (DYNAMIC / CALENDAR-YEAR): {file_label}")
+    print(f"  VENUE DiD ESTIMATION (DYNAMIC / CALENDAR-YEAR / {control_group.upper()}): {file_label}")
     print(f'{"=" * 70}')
 
     df, meta = load_and_prepare(input_path)
@@ -1325,6 +1346,7 @@ def process_one_file(
             covariates=covariates,
             n_boot=n_boot,
             label="general",
+            control_group=control_group,
         )
 
         if result is None:
@@ -1416,6 +1438,7 @@ def process_one_file(
                     est_method=est_method,
                     covariates=het_covs,
                     n_boot=n_boot,
+                    control_group=control_group,
                 )
                 het_prefix = "gender"
 
@@ -1429,6 +1452,7 @@ def process_one_file(
                     est_method=est_method,
                     covariates=het_covs,
                     n_boot=n_boot,
+                    control_group=control_group,
                 )
                 het_prefix = "career"
 
@@ -1440,6 +1464,7 @@ def process_one_file(
                     est_method=est_method,
                     covariates=het_covs,
                     n_boot=n_boot,
+                    control_group=control_group,
                 )
                 het_prefix = "region"
 
@@ -1523,6 +1548,12 @@ def main():
         default=None,
         help='Override covariate columns. Use "none" for unconditional.',
     )
+    ap.add_argument(
+        "--control_group",
+        default="nevertreated",
+        choices=["nevertreated", "notyettreated"],
+        help="Control group type: nevertreated (default) or notyettreated",
+    )
 
     args = ap.parse_args()
 
@@ -1545,6 +1576,7 @@ def main():
             est_method=args.est_method,
             covariates=cov,
             n_boot=args.n_boot,
+            control_group=args.control_group,
         )
     else:
         input_dir = Path(args.input_dir)
@@ -1560,6 +1592,7 @@ def main():
                 est_method=args.est_method,
                 covariates=cov,
                 n_boot=args.n_boot,
+                control_group=args.control_group,
             )
 
 
