@@ -39,8 +39,9 @@ venue_effect/
 │   │   ├── enrich_citations.py           # Citation enrichment
 │   │   ├── enrich_l2_field.py            # Field-level enrichment
 │   │   ├── enrich_novelty.py             # Novelty metric enrichment
+│   │   ├── enrich_novelty.py             # Novelty metric enrichment
+│   │   ├── enrich_citations_normalized.py# Citation enrichment with normalized metric
 │   │   └── README_matching.md            # Matching methodology documentation
-│   │
 │   ├── did/
 │   │   ├── venue_did_csdid.py            # DiD estimation (Callaway & Sant'Anna 2021)
 │   │   ├── venue_did_csdid_dynamic.py    # Dynamic event-study DiD
@@ -61,6 +62,7 @@ venue_effect/
     ├── matching/
     │   ├── matching_art.py               # Art matching engine (CEM + DTW)
     │   ├── enrich_titles.py              # Title enrichment for art pieces
+    │   ├── enrich_art_normalized.py      # Enrichment for normalized career metrics
     │   └── README_matching_art.md        # Art matching methodology documentation
     │
     ├── did/
